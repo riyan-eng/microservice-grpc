@@ -1,0 +1,11 @@
+services:
+  backend:
+    build: .
+    container_name: example-service
+    restart: unless-stopped
+    image: example-service
+    volumes:
+      - ./env-docker.json:/app/env.json
+networks:
+  network-1:
+    name: local-bridge

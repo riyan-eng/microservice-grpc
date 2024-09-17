@@ -40,7 +40,7 @@ func (m *authRepository) Login(ctx *context.Context, username *string) (*datastr
 	sqlRows, err := m.sqlDB.QueryContext(*ctx, query)
 	if err != nil {
 		return data, &util.Error{
-			Errors: err,
+			Errors:     err,
 			StatusCode: 13,
 		}
 	}
@@ -58,7 +58,13 @@ func (m *authRepository) Login(ctx *context.Context, username *string) (*datastr
 func (m *authRepository) Logout(ctx *context.Context, userId *string) *util.Error {
 	if err := m.cache.Del(*ctx, fmt.Sprintf("access-token-%s", *userId)).Err(); err != nil {
 		return &util.Error{
-			Errors: err,
+			Errors:     err,
+			StatusCode: 13,
+		}
+	}
+	if err := m.cache.Del(*ctx, fmt.Sprintf("refresh-token-%s", *userId)).Err(); err != nil {
+		return &util.Error{
+			Errors:     err,
 			StatusCode: 13,
 		}
 	}
@@ -81,7 +87,7 @@ func (m *authRepository) Me(ctx *context.Context, userId *string) (*datastruct.A
 	sqlRows, err := m.sqlDB.QueryContext(*ctx, query)
 	if err != nil {
 		return data, &util.Error{
-			Errors: err,
+			Errors:     err,
 			StatusCode: 13,
 		}
 	}

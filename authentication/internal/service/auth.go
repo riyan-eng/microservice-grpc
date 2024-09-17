@@ -121,7 +121,6 @@ func (m *authService) Logout(ctx *context.Context, ent *entity.AuthLogout) *util
 	if err.Errors != nil {
 		return err
 	}
-
 	return &util.Error{}
 }
 

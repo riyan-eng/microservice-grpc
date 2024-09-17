@@ -17,14 +17,12 @@ message AuthLoginResponse {
 }
 
 message AuthLogoutRequest {
-    string token = 1;
 }
 
 message AuthLogoutResponse {
 }
 
 message AuthMeRequest {
-    string token = 1;
 }
 
 message AuthMeResponse {

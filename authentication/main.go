@@ -7,6 +7,7 @@ import (
 	"server/config"
 	"server/env"
 	"server/infrastructure"
+	"server/interceptor"
 	"server/internal/handler"
 	"server/internal/repository"
 	"server/internal/service"
@@ -31,7 +32,6 @@ func init() {
 }
 
 func main() {
-	srv := grpc.NewServer()
 
 	dao := repository.NewDAO(infrastructure.SqlDB, infrastructure.SqlxDB, infrastructure.Redis, config.NewEnforcer())
 	exampleService := service.NewExampleService(&dao)
@@ -41,6 +41,12 @@ func main() {
 		exampleService,
 		authService,
 	)
+
+	newInterceptor := interceptor.NewUnaryInterceptor(service)
+
+	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		newInterceptor.Unary(),
+	))
 
 	pb.RegisterTaskServiceServer(srv, service)
 	pb.RegisterAuthServiceServer(srv, service)

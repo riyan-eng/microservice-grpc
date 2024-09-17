@@ -40,5 +40,6 @@ func (m *dao) NewAuthRepository() AuthRepository {
 	return &authRepository{
 		sqlDB:  m.SqlDB,
 		sqlxDB: m.SqlxDB,
+		cache:  m.Cache,
 	}
 }

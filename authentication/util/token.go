@@ -115,13 +115,13 @@ func (t *tokenStruct) ValidateAccess(ctx *context.Context, claims *AccessTokenCl
 		}
 		cachedTokens := new(AccessTokenCached)
 		err = json.Unmarshal([]byte(cacheJSON), cachedTokens)
-		// var tokenUID string = cachedTokens.AccessUID
-		// if err != nil || tokenUID != claims.UUID {
-		// 	return fmt.Errorf("token not found")
-		// }
-		if err != nil {
+		var tokenUID string = cachedTokens.AccessUID
+		if err != nil || tokenUID != claims.UUID {
 			return fmt.Errorf("token not found")
 		}
+		// if err != nil {
+		// 	return fmt.Errorf("token not found")
+		// }
 		return nil
 	})
 
@@ -193,13 +193,13 @@ func (t *tokenStruct) ValidateRefresh(ctx *context.Context, claims *RefreshToken
 		}
 		cachedTokens := new(RefreshTokenCached)
 		err = json.Unmarshal([]byte(cacheJSON), cachedTokens)
-		// var tokenUID string = cachedTokens.RefreshUID
-		// if err != nil || tokenUID != claims.UUID {
-		// 	return fmt.Errorf("token not found")
-		// }
-		if err != nil {
+		var tokenUID string = cachedTokens.RefreshUID
+		if err != nil || tokenUID != claims.UUID {
 			return fmt.Errorf("token not found")
 		}
+		// if err != nil {
+		// 	return fmt.Errorf("token not found")
+		// }
 		return nil
 	})
 

@@ -65,7 +65,7 @@ func Auth(ctx context.Context, method string) (context.Context, error) {
 		RoleCode: claim.RoleCode,
 	}
 
-	ctx = context.WithValue(ctx, util.AccessTokenClaims{}, newClaim)
+	ctx = context.WithValue(ctx, util.AccessTokenClaimsKey{}, newClaim)
 
 	return ctx, nil
 }

@@ -1,0 +1,12 @@
+services:
+  backend:
+    build: .
+    container_name: auth-service
+    restart: unless-stopped
+    image: auth-service
+    volumes:
+      - ./env-docker.json:/app/env.json
+      - ./casbin.conf:/app/casbin.conf
+networks:
+  network-1:
+    name: local-bridge
