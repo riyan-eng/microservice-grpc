@@ -6,7 +6,6 @@ import (
 	"server/config"
 	"server/env"
 	"server/infrastructure"
-	"server/internal/repository"
 	"server/internal/router"
 	"server/middleware"
 
@@ -34,11 +33,11 @@ func init() {
 	env.NewEnv()
 
 	config.NewLimiterStore()
-	config.NewLogger()
+	// config.NewLogger()
 
-	infrastructure.ConnectSqlDB()
-	infrastructure.ConnectSqlxDB()
-	infrastructure.ConnRedis()
+	// infrastructure.ConnectSqlDB()
+	// infrastructure.ConnectSqlxDB()
+	// infrastructure.ConnRedis()
 	infrastructure.NewLocalizer()
 }
 
@@ -75,7 +74,7 @@ func main() {
 	// middleware
 	app.Use(gin.Recovery())
 	app.Use(middleware.RequestId())
-	app.Use(middleware.Logger())
+	// app.Use(middleware.Logger())
 	app.Use(middleware.Limiter())
 	app.Use(infrastructure.LocalizerMiddleware())
 
@@ -85,17 +84,11 @@ func main() {
 	corsconfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	app.Use(cors.New(corsconfig))
 
-	// service
-	dao := repository.NewDAO(infrastructure.SqlDB, infrastructure.SqlxDB, infrastructure.Redis)
-
 	// router
-	routers := router.NewRouter(app, &dao)
+	routers := router.NewRouter(app)
 	routers.Index()
 	routers.Authentication()
 	routers.Example()
-	routers.Perangkat()
-	routers.Object()
-	routers.Export()
 
 	// startup log
 	fmt.Println("server run on:", env.NewEnv().SERVER_HOST+":"+env.NewEnv().SERVER_PORT)

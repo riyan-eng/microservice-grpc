@@ -13,9 +13,9 @@ import (
 )
 
 type AuthRepository interface {
-	Login(ctx *context.Context, username *string) (*datastruct.AuthLoginData, *util.Error)
-	Logout(ctx *context.Context, userId *string) *util.Error
-	Me(ctx *context.Context, userId *string) (*datastruct.AuthMe, *util.Error)
+	Login(ctx context.Context, username string) (*datastruct.AuthLoginData, error)
+	Logout(ctx context.Context, userId string) error
+	Me(ctx context.Context, userId string) (*datastruct.AuthMe, error)
 }
 
 type authRepository struct {
@@ -24,80 +24,69 @@ type authRepository struct {
 	cache  *redis.Client
 }
 
-func (m *authRepository) Login(ctx *context.Context, username *string) (*datastruct.AuthLoginData, *util.Error) {
+func (m *authRepository) Login(ctx context.Context, username string) (*datastruct.AuthLoginData, error) {
 	data := new(datastruct.AuthLoginData)
 
 	query := fmt.Sprintf(`
-	select u."uuid", u.username, u."password", u.is_active, j.name as jabatan_name, r.code as role_code, r."name" as role_name 
+	select u."uuid", u.email, u.username, u."password", u.is_active, r.code as role_code, r."name" as role_name 
 	from users u 
 	left join user_datas ud on ud.user_uuid = u."uuid" 
-	left join roles r on r.code = ud.role_code  
-	left join jabatan j on ud.jabatan_code = j.code 
-	where u.username = '%v' and u.is_delete = false
+	left join roles r on r.code = ud.role_code
+	where u.email = '%s' and u.deleted_at is null
 	limit 1
-	`, *username)
+	`, username)
 
-	sqlRows, err := m.sqlDB.QueryContext(*ctx, query)
+	sqlRows, err := m.sqlDB.QueryContext(ctx, query)
 	if err != nil {
-		return data, &util.Error{
-			Errors:     err,
-			StatusCode: 13,
-		}
+		return data, fmt.Errorf("13:%v", err)
 	}
 
 	if err := scan.Row(data, sqlRows); err != nil {
-		return data, &util.Error{
-			Errors:     err,
-			StatusCode: 5,
+		if err == sql.ErrNoRows {
+			return data, fmt.Errorf("5:email or username not registered")
 		}
+		return data, fmt.Errorf("13:%v", err)
 	}
 
-	return data, &util.Error{}
+	return data, nil
 }
 
-func (m *authRepository) Logout(ctx *context.Context, userId *string) *util.Error {
-	if err := m.cache.Del(*ctx, fmt.Sprintf("access-token-%s", *userId)).Err(); err != nil {
-		return &util.Error{
-			Errors:     err,
-			StatusCode: 13,
-		}
+func (m *authRepository) Logout(ctx context.Context, userId string) error {
+	if err := m.cache.Del(ctx, fmt.Sprintf("access-token-%s", userId)).Err(); err != nil {
+		return fmt.Errorf("13:%v", err)
 	}
-	if err := m.cache.Del(*ctx, fmt.Sprintf("refresh-token-%s", *userId)).Err(); err != nil {
-		return &util.Error{
-			Errors:     err,
-			StatusCode: 13,
-		}
+	if err := m.cache.Del(ctx, fmt.Sprintf("refresh-token-%s", userId)).Err(); err != nil {
+		return fmt.Errorf("13:%v", err)
 	}
-	return &util.Error{}
+	return nil
 }
 
-func (m *authRepository) Me(ctx *context.Context, userId *string) (*datastruct.AuthMe, *util.Error) {
+func (m *authRepository) Me(ctx context.Context, userId string) (*datastruct.AuthMe, error) {
 	data := new(datastruct.AuthMe)
 
 	query := fmt.Sprintf(`
-	select u."uuid", u.username, r.code as role_code, r."name" as role_name, ud.jabatan_code, j.name as jabatan_name, u.birth_place, u.birth_date::text, u.address, u.photo_url 
+	select u."uuid", u.username, r.code as role_code, r."name" as role_name, u.photo_url, (
+		select json_agg(p.code) 
+		from rules r 
+		left join permissions p on r.v1 = p.full_method
+		where r.v0 = ud.role_code
+	) as permissions
 	from users u 
 	left join user_datas ud on ud.user_uuid = u.uuid 
-	left join roles r on r.code = ud.role_code  
-	left join jabatan j on ud.jabatan_code = j.code 
+	left join roles r on r.code = ud.role_code
 	where u.uuid = '%v' 
 	limit 1
-	`, *userId)
+	`, userId)
 
-	sqlRows, err := m.sqlDB.QueryContext(*ctx, query)
+	sqlRows, err := m.sqlDB.QueryContext(ctx, query)
 	if err != nil {
-		return data, &util.Error{
-			Errors:     err,
-			StatusCode: 13,
-		}
+		return data, fmt.Errorf("13:%v", err)
 	}
 
 	if err := scan.Row(data, sqlRows); err != nil {
-		return data, &util.Error{
-			Errors:     err,
-			StatusCode: 5,
-		}
+		return data, fmt.Errorf("5:%v", err)
 	}
 
-	return data, &util.Error{}
+	data.Permissions = util.UnmarshalConverter[[]string](data.PermissionsStr)
+	return data, nil
 }

@@ -40,8 +40,6 @@ type Config struct {
 	REDIS_USERNAME            string
 	REDIS_PASSWORD            string
 	REDIS_DATABASE            int
-	CERTIFICATE_CRT           string
-	CERTIFICATE_KEY           string
 }
 
 var cfg Config
@@ -93,8 +91,6 @@ func NewEnv() *Config {
 			REDIS_USERNAME:            viper.GetString("redis.username"),
 			REDIS_PASSWORD:            viper.GetString("redis.password"),
 			REDIS_DATABASE:            viper.GetInt("redis.database"),
-			CERTIFICATE_CRT:           viper.GetString("certificate.crt"),
-			CERTIFICATE_KEY:           viper.GetString("certificate.key"),
 			// Initialize other configuration variables here
 		}
 	}

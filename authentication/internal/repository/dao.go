@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"server/config"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/jmoiron/sqlx"
@@ -9,8 +10,8 @@ import (
 )
 
 type DAO interface {
-	NewExampleRepository() ExampleRepository
 	NewAuthRepository() AuthRepository
+	NewPermissionRepository() PermissionRepository
 }
 
 type dao struct {
@@ -20,24 +21,25 @@ type dao struct {
 	Permission *casbin.Enforcer
 }
 
-func NewDAO(sqlDB *sql.DB, sqlxDB *sqlx.DB, cache *redis.Client, permission *casbin.Enforcer) DAO {
+func NewDAO(conf *config.Config) DAO {
 	return &dao{
-		SqlDB:      sqlDB,
-		SqlxDB:     sqlxDB,
-		Cache:      cache,
-		Permission: permission,
-	}
-}
-
-func (m *dao) NewExampleRepository() ExampleRepository {
-	return &exampleRepository{
-		sqlDB:  m.SqlDB,
-		sqlxDB: m.SqlxDB,
+		SqlDB:      conf.SqlDB,
+		SqlxDB:     conf.SqlXDB,
+		Cache:      conf.Cache,
+		Permission: conf.Permission,
 	}
 }
 
 func (m *dao) NewAuthRepository() AuthRepository {
 	return &authRepository{
+		sqlDB:  m.SqlDB,
+		sqlxDB: m.SqlxDB,
+		cache:  m.Cache,
+	}
+}
+
+func (m *dao) NewPermissionRepository() PermissionRepository {
+	return &permissionRepository{
 		sqlDB:  m.SqlDB,
 		sqlxDB: m.SqlxDB,
 		cache:  m.Cache,

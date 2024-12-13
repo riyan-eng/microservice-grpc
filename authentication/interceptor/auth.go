@@ -3,7 +3,7 @@ package interceptor
 import (
 	"context"
 	"fmt"
-	"server/internal/handler"
+	"server/internal/controller"
 	"server/pb"
 	"server/util"
 
@@ -14,10 +14,10 @@ import (
 )
 
 type unaryInterceptor struct {
-	service *handler.ServiceServer
+	service *controller.ServiceServer
 }
 
-func NewUnaryInterceptor(service *handler.ServiceServer) *unaryInterceptor {
+func NewUnaryInterceptor(service *controller.ServiceServer) *unaryInterceptor {
 	return &unaryInterceptor{
 		service: service,
 	}
@@ -42,9 +42,11 @@ func (m *unaryInterceptor) Auth(ctx context.Context, method string) (context.Con
 	}
 
 	if methodAuthWhiteList[method] {
+		fmt.Println("ini non auth")
 		return ctx, nil
 	}
 
+	fmt.Println("ini auth")
 	values := md["authorization"]
 	if len(values) == 0 {
 		return ctx, status.Errorf(codes.Unauthenticated, "authorization token is not provided")
@@ -68,7 +70,9 @@ func (m *unaryInterceptor) Auth(ctx context.Context, method string) (context.Con
 }
 
 var methodAuthWhiteList = map[string]bool{
-	"/proto.AuthService/Login":              true,
-	"/proto.AuthService/Refresh":            true,
-	"/proto.AuthService/ValidatePermission": true,
+	"/proto.AuthService/Login":                true,
+	"/proto.AuthService/Refresh":              true,
+	"/proto.AuthService/ValidatePermission":   true,
+	"/proto.AuthService/ValidateToken":        true,
+	"/proto.PermissionService/RoleAccessList": true,
 }

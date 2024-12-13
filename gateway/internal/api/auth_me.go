@@ -14,7 +14,7 @@ import (
 // @Produce		json
 // @Success      200  {object}  util.SuccessResponse
 // @Failure      400  {object}  util.ErrorResponse
-// @Router		/auth/me/ [get]
+// @Router		/auth/me [get]
 // @Security 	BearerAuth
 func (m *ServiceServer) AuthMe(c *gin.Context) {
 	ctx := c.Request.Context()

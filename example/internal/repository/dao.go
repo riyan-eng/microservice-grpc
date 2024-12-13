@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"server/config"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -15,10 +16,10 @@ type dao struct {
 	SqlxDB *sqlx.DB
 }
 
-func NewDAO(sqlDB *sql.DB, sqlxDB *sqlx.DB) DAO {
+func NewDAO(conf *config.Config) DAO {
 	return &dao{
-		SqlDB:  sqlDB,
-		SqlxDB: sqlxDB,
+		SqlDB:  conf.SqlDB,
+		SqlxDB: conf.SqlXDB,
 	}
 }
 

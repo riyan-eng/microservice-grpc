@@ -25,8 +25,6 @@ func Unary() grpc.UnaryServerInterceptor {
 	}
 }
 
-type ClaimKey struct{}
-
 func Auth(ctx context.Context, method string) (context.Context, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -46,6 +44,7 @@ func Auth(ctx context.Context, method string) (context.Context, error) {
 	claim, err := rpcserver.AuthService().ValidateToken(ctx, &pb.AuthValidateTokenRequest{
 		Token: values[0],
 	})
+
 	if err != nil {
 		return ctx, status.Errorf(codes.Unauthenticated, "token doesn't valid")
 	}
@@ -76,5 +75,5 @@ var methodAuthWhiteList = map[string]bool{
 }
 
 var methodPermWhiteList = map[string]bool{
-	"/proto.TaskService/Create": true,
+	// "/proto.TaskService/Create": true,
 }

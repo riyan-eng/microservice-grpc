@@ -1,0 +1,4 @@
+{
+    "role_code": "SUPER_ADMIN",
+    "permission_code": ["A1", "A2", "A3", "A4", "A5"]
+}

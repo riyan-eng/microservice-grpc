@@ -12,15 +12,17 @@ type AuthLoginData struct {
 }
 
 type AuthToken struct {
-	AccessToken    *string
+	AccessToken    string
 	AccessExpired  *jwt.NumericDate
-	RefreshToken   *string
+	RefreshToken   string
 	RefreshExpired *jwt.NumericDate
 }
 
 type AuthMe struct {
-	UUID     string `db:"uuid" json:"id"`
-	Username string `db:"username" json:"username"`
-	RoleCode string `db:"role_code"`
-	RoleName string `db:"role_name"`
+	UUID           string   `db:"uuid" json:"id"`
+	Username       string   `db:"username" json:"username"`
+	RoleCode       string   `db:"role_code"`
+	RoleName       string   `db:"role_name"`
+	PermissionsStr string   `db:"permissions"`
+	Permissions    []string `db:"-"`
 }

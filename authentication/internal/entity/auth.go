@@ -1,48 +1,48 @@
 package entity
 
 type AuthRegister struct {
-	UserId   *string
-	Email    *string
-	UserName *string
-	Password *string
-	RoleCode *string
+	UserId   string
+	Email    string
+	UserName string
+	Password string
+	RoleCode string
 }
 
 type AuthLogin struct {
-	Username *string
-	Password *string
+	Username string
+	Password string
 }
 
 type AuthRefresh struct {
-	Token *string
+	Token string
 }
 
 type AuthResetPassword struct {
-	Token    *string
-	Password *string
+	Token    string
+	Password string
 }
 
 type AuthResetPasswordToken struct {
-	Email *string
+	Email string
 }
 
 type AuthResetPasswordTokenValidate struct {
-	Token *string
+	Token string
 }
 
 type AuthLogout struct {
-	UserId *string
+	UserId string
 }
 
 type AuthMe struct {
-	UserId *string
+	UserId string
 }
 
 type AuthValidateAccess struct {
-	Token *string
+	Token string
 }
 
 type AuthValidatePermission struct {
-	UserId     *string
-	FullMethod *string
+	UserId     string
+	FullMethod string
 }

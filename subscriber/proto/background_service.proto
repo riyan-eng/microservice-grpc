@@ -1,0 +1,27 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "./pb";
+
+service BackgroundService {
+  rpc BackgroundCreate(BackgroundCreateRequest) returns (BackgroundCreateResponse);
+}
+
+message BackgroundCreateRequest {
+  string type = 1;
+  BackgroundCreateBodyRequest body = 2;
+}
+
+message BackgroundCreateBodyRequest {
+  string to = 1;
+  string name = 2;
+  string desc = 3;
+  string v1 = 4;
+  string v2 = 5;
+  string v3 = 6;
+  string v4 = 7;
+  string v5 = 8;
+}
+
+message BackgroundCreateResponse {
+}

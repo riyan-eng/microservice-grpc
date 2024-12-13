@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"runtime"
+	"server/config"
 	"server/env"
 	"server/infrastructure"
 	"server/interceptor"
@@ -11,6 +12,7 @@ import (
 	"server/internal/repository"
 	"server/internal/service"
 	"server/pb"
+	"server/util"
 
 	"google.golang.org/grpc"
 )
@@ -36,24 +38,41 @@ func init() {
 	}
 	env.LoadEnvironmentFile()
 	env.NewEnv()
-
-	infrastructure.ConnectSqlDB()
-	infrastructure.ConnectSqlxDB()
 }
 
 func main() {
-	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		// selector.UnaryServerInterceptor(
-		// 	auth.UnaryServerInterceptor(interceptor.Authenticator),
-		// 	selector.MatchFunc(interceptor.AuthMatcher),
-		// ),
-		interceptor.Unary(),
-	))
+	// initiate db connection
+	sqlDB, err := infrastructure.ConnectSqlDB()
+	if err != nil {
+		log.Fatalf("Database sql connection error: %v", err)
+	}
+	defer sqlDB.Close()
 
-	dao := repository.NewDAO(infrastructure.SqlDB, infrastructure.SqlxDB)
+	sqlxDB, err := infrastructure.ConnectSqlxDB()
+	if err != nil {
+		log.Fatalf("Database sqlx connection error: %v", err)
+	}
+	defer sqlxDB.Close()
+
+	myConfig := config.Config{
+		SqlDB:  sqlDB,
+		SqlXDB: sqlxDB,
+	}
+
+	errorUtil := util.NewError()
+
+	myUtil := util.Util{
+		Error: errorUtil,
+	}
+
+	dao := repository.NewDAO(&myConfig)
 	exampleService := service.NewExampleService(&dao)
 
-	service := handler.NewService(dao, exampleService)
+	service := handler.NewService(&myUtil, dao, exampleService)
+
+	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		interceptor.Unary(),
+	))
 	pb.RegisterTaskServiceServer(srv, service)
 
 	log.Println("Starting RPC server:", env.NewEnv().SERVER_HOST+":"+env.NewEnv().SERVER_PORT)

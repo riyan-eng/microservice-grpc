@@ -13,7 +13,7 @@
         "timezone": "Asia/Jakarta",
         "username": "postgres",
         "password": "riyan",
-        "database": "sisambi_development",
+        "database": "micro_auth",
         "connection": {
             "max_idle": 10,
             "max_open": 20,

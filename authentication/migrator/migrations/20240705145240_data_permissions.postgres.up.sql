@@ -1,0 +1,4 @@
+-- insert into permissions(parent, code, "name", full_method) values 
+-- ('SUPERADMIN', 'Super Admin'),
+-- ('ADMIN', 'Admin'),
+-- ('STAFF', 'Staff')

@@ -14,7 +14,7 @@ import (
 // @Produce		json
 // @Success      200  {object}  util.SuccessResponse
 // @Failure      400  {object}  util.ErrorResponse
-// @Router		/auth/logout/ [delete]
+// @Router		/auth/logout [delete]
 // @Security 	BearerAuth
 func (m *ServiceServer) AuthLogout(c *gin.Context) {
 	ctx := c.Request.Context()

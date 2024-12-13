@@ -1,42 +1,42 @@
 package config
 
 import (
+	"database/sql"
 	"fmt"
-	"os"
-
-	"server/infrastructure"
+	"log"
 
 	sqladapter "github.com/Blank-Xu/sql-adapter"
 	"github.com/casbin/casbin/v2"
 )
 
-func NewEnforcer() *casbin.Enforcer {
-	adapter, err := sqladapter.NewAdapter(infrastructure.SqlDB, "postgres", "permissions")
+func NewEnforcer(db *sql.DB) (*casbin.Enforcer, error) {
+	adapter, err := sqladapter.NewAdapter(db, "postgres", "rules")
 	if err != nil {
-		fmt.Printf("casbin: failed to initialize adapter - %v \n", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("casbin: failed to initialize adapter - %v", err)
 	}
 	enforce, err := casbin.NewEnforcer("./casbin.conf", adapter)
 	if err != nil {
-		fmt.Printf("casbin: failed to create enforcer - %v \n", err)
-		os.Exit(1)
+		return nil, fmt.Errorf("casbin: failed to create enforcer - %v", err)
 	}
 
-	policies := [][]string{
-		{"ADMIN", "/proto.TaskService/Delete"},
-	}
+	// policies := [][]string{
+	// 	{"SUPERADMIN", "/proto.TaskService/List"},
+	// 	{"SUPERADMIN", "/proto.TaskService/Delete"},
+	// 	{"ADMIN", "/proto.TaskService/Delete"},
+	// }
 
-	_, err = infrastructure.SqlxDB.Exec("delete from permissions where p_type = 'p' ")
-	if err != nil {
-		fmt.Printf("casbin: failed to delete policies - %v \n", err)
-		os.Exit(1)
-	}
-	_, err = enforce.AddPoliciesEx(policies)
-	if err != nil {
-		fmt.Printf("casbin: failed to add policies - %v \n", err)
-		os.Exit(1)
-	}
+	// _, err = infrastructure.SqlxDB.Exec("delete from rules where p_type = 'p' ")
+	// if err != nil {
+	// 	fmt.Printf("casbin: failed to delete policies - %v \n", err)
+	// 	os.Exit(1)
+	// }
+	// _, err = enforce.AddPoliciesEx(policies)
+	// if err != nil {
+	// 	fmt.Printf("casbin: failed to add policies - %v \n", err)
+	// 	os.Exit(1)
+	// }
 	enforce.LoadPolicy()
 
-	return enforce
+	log.Println("casbin: permission established")
+	return enforce, nil
 }

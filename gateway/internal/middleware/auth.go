@@ -13,12 +13,12 @@ func AuthBearer() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		bearerString := string(authHeader)
 		if bearerString == "" {
-			util.NewResponse(c).Error("authorization header is required", "", 400)
+			util.NewResponse(c).Error("authorization header is required", "", 401)
 			return
 		}
 		token, found := strings.CutPrefix(bearerString, "Bearer ")
 		if !found {
-			util.NewResponse(c).Error("undefined token", "", 400)
+			util.NewResponse(c).Error("undefined token", "", 401)
 			return
 
 		}

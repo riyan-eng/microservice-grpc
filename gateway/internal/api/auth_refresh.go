@@ -16,7 +16,7 @@ import (
 // @Param       body	body  dto.AuthRefresh	true  "body"
 // @Success      200  {object}  util.SuccessResponse
 // @Failure      400  {object}  util.ErrorResponse
-// @Router		/auth/refresh/ [post]
+// @Router		/auth/refresh [post]
 func (m *ServiceServer) AuthRefresh(c *gin.Context) {
 	ctx := c.Request.Context()
 	payload := new(dto.AuthRefresh)

@@ -16,7 +16,7 @@ import (
 // @Param       body	body  dto.AuthLogin	true  "body"
 // @Success      200  {object}  util.SuccessResponse
 // @Failure      400  {object}  util.ErrorResponse
-// @Router		/auth/login/ [post]
+// @Router		/auth/login [post]
 func (m *ServiceServer) AuthLogin(c *gin.Context) {
 	ctx := c.Request.Context()
 	payload := new(dto.AuthLogin)
@@ -31,6 +31,7 @@ func (m *ServiceServer) AuthLogin(c *gin.Context) {
 		util.NewResponse(c).Error(errors, infrastructure.Localize("FAILED_VALIDATION"), 400)
 		return
 	}
+	
 	data, err := m.authRpcServer.Login(ctx, &pb.AuthLoginRequest{
 		Username: payload.Username,
 		Password: payload.Password,

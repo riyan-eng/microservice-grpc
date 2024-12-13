@@ -1,0 +1,37 @@
+[
+    {
+        "role_name": "Super Admin",
+        "permissions": [
+            {
+                "permission_code": "A1",
+                "permission_name": "Menambah data",
+                "permission_parent": ""
+            },
+            {
+                "permission_code": "A2",
+                "permission_name": "Mengubah data",
+                "permission_parent": ""
+            },
+            {
+                "permission_code": "A3",
+                "permission_name": "Menghapus data",
+                "permission_parent": ""
+            }
+        ]
+    },
+    {
+        "role_name": "Admin",
+        "permissions": [
+            {
+                "permission_code": "A4",
+                "permission_name": "Melihat detail data",
+                "permission_parent": ""
+            },
+            {
+                "permission_code": "A5",
+                "permission_name": "Melihat list data",
+                "permission_parent": ""
+            }
+        ]
+    }
+]

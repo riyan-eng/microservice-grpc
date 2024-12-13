@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"server/infrastructure"
 
@@ -131,15 +132,15 @@ func (m *responseStruct) Import(errors []ImportError, totalInput int, failed int
 	})
 }
 
-func (m *responseStruct) GrpcError(errors error, message string, statusCode ...int) {
+func (m *responseStruct) GrpcError(errorsIn error, message string, statusCode ...int) {
 	code := 500
 	var err error = fmt.Errorf("")
-	grpcErr, ok := status.FromError(errors)
+	grpcErr, ok := status.FromError(errorsIn)
 	if ok {
 		grpcCode := grpcErr.Code()
 		grpcMessage := grpcErr.Message()
 		if grpcMessage != "" {
-			err = fmt.Errorf(grpcMessage)
+			err = errors.New(grpcMessage)
 		}
 
 		switch grpcCode {
@@ -168,13 +169,12 @@ func (m *responseStruct) GrpcError(errors error, message string, statusCode ...i
 	}
 
 	if message == "" {
-		fmt.Println(code)
 		message = infrastructure.Localize(localizeResponseCode[code])
 	}
 
 	requestId := requestid.Get(m.c)
 
-	m.c.Set("error", errors.Error())
+	m.c.Set("error", errorsIn.Error())
 	m.c.AbortWithStatusJSON(code, ErrorResponse{
 		Error:   err.Error(),
 		Message: message,

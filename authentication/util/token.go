@@ -5,64 +5,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"server/env"
-	"server/infrastructure"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/errgroup"
 )
 
 var mySigningKey = []byte("AllYourBase")
 
-type AccessTokenClaims struct {
-	UserId   string `json:"user_id"`
-	RoleCode string `json:"role_code"`
-	UUID     string `json:"id"`
-	jwt.RegisteredClaims
+func NewToken(cache *redis.Client) *Token {
+	return &Token{
+		Cache: cache,
+	}
 }
 
-type AccessTokenCached struct {
-	AccessUID string `json:"access"`
-}
-
-type RefreshTokenClaims struct {
-	UserId   string `json:"user_id"`
-	RoleCode string `json:"role_code"`
-	UUID     string `json:"id"`
-	jwt.RegisteredClaims
-}
-
-type RefreshTokenCached struct {
-	RefreshUID string `json:"refresh"`
-}
-
-type ResetTokenClaims struct {
-	UserId string `json:"user_id"`
-	UUID   string `json:"id"`
-	jwt.RegisteredClaims
-}
-
-type ResetTokenCached struct {
-	ResetUID string `json:"reset"`
-}
-
-type tokenStruct struct{}
-
-func NewToken() *tokenStruct {
-	return &tokenStruct{}
-}
-
-func (t *tokenStruct) CreateAccess(ctx *context.Context, userId, userRole *string) (*string, *jwt.NumericDate, error) {
-	tokenString := new(string)
+func (t *Token) CreateAccess(ctx context.Context, userId, userRole string) (string, *jwt.NumericDate, error) {
 	expired := new(jwt.NumericDate)
 
 	expiredTime := time.Minute * env.NewEnv().JWT_EXPIRED_ACCESS
 
 	tokenUUID := uuid.NewString()
 	claims := AccessTokenClaims{
-		*userId,
-		*userRole,
+		userId,
+		userRole,
 		tokenUUID,
 		jwt.RegisteredClaims{
 			// A usual scenario is to set the expiration time relative to the current time
@@ -73,12 +40,10 @@ func (t *tokenStruct) CreateAccess(ctx *context.Context, userId, userRole *strin
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(mySigningKey)
+	tokenString, err := token.SignedString(mySigningKey)
 	if err != nil {
 		return tokenString, expired, fmt.Errorf("can't signed the token")
 	}
-
-	tokenString = &ss
 
 	cachedJson, err := json.Marshal(AccessTokenCached{
 		AccessUID: claims.UUID,
@@ -87,14 +52,14 @@ func (t *tokenStruct) CreateAccess(ctx *context.Context, userId, userRole *strin
 		return tokenString, expired, fmt.Errorf("can't marshal access token")
 	}
 
-	if err := infrastructure.Redis.Set(*ctx, fmt.Sprintf("access-token-%s", *userId), string(cachedJson), expiredTime).Err(); err != nil {
+	if err := t.Cache.Set(ctx, fmt.Sprintf("access-token-%s", userId), string(cachedJson), expiredTime).Err(); err != nil {
 		return tokenString, expired, fmt.Errorf("can't cached access token")
 	}
 	return tokenString, claims.ExpiresAt, nil
 }
 
-func (t *tokenStruct) ParseAccess(tokenString *string) (*AccessTokenClaims, error) {
-	token, err := jwt.ParseWithClaims(*tokenString, &AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (t *Token) ParseAccess(tokenString string) (*AccessTokenClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &AccessTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return mySigningKey, nil
 	})
 	if err != nil {
@@ -106,10 +71,10 @@ func (t *tokenStruct) ParseAccess(tokenString *string) (*AccessTokenClaims, erro
 	}
 }
 
-func (t *tokenStruct) ValidateAccess(ctx *context.Context, claims *AccessTokenClaims) error {
+func (t *Token) ValidateAccess(ctx context.Context, claims *AccessTokenClaims) error {
 	g := new(errgroup.Group)
 	g.Go(func() error {
-		cacheJSON, err := infrastructure.Redis.Get(*ctx, fmt.Sprintf("access-token-%s", claims.UserId)).Result()
+		cacheJSON, err := t.Cache.Get(ctx, fmt.Sprintf("access-token-%s", claims.UserId)).Result()
 		if err != nil {
 			return fmt.Errorf("token not found")
 		}
@@ -131,16 +96,15 @@ func (t *tokenStruct) ValidateAccess(ctx *context.Context, claims *AccessTokenCl
 	return nil
 }
 
-func (t *tokenStruct) CreateRefresh(ctx *context.Context, userId, userRole *string) (*string, *jwt.NumericDate, error) {
-	tokenString := new(string)
+func (t *Token) CreateRefresh(ctx context.Context, userId, userRole string) (string, *jwt.NumericDate, error) {
 	expired := new(jwt.NumericDate)
 
 	expiredTime := time.Minute * env.NewEnv().JWT_EXPIRED_REFRESH
 
 	tokenUUID := uuid.NewString()
 	claims := RefreshTokenClaims{
-		*userId,
-		*userRole,
+		userId,
+		userRole,
 		tokenUUID,
 		jwt.RegisteredClaims{
 			// A usual scenario is to set the expiration time relative to the current time
@@ -151,12 +115,10 @@ func (t *tokenStruct) CreateRefresh(ctx *context.Context, userId, userRole *stri
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(mySigningKey)
+	tokenString, err := token.SignedString(mySigningKey)
 	if err != nil {
 		return tokenString, expired, fmt.Errorf("can't signed the token")
 	}
-
-	tokenString = &ss
 
 	cachedJson, err := json.Marshal(RefreshTokenCached{
 		RefreshUID: claims.UUID,
@@ -165,14 +127,14 @@ func (t *tokenStruct) CreateRefresh(ctx *context.Context, userId, userRole *stri
 		return tokenString, expired, fmt.Errorf("can't marshal refresh token")
 	}
 
-	if err := infrastructure.Redis.Set(*ctx, fmt.Sprintf("refresh-token-%s", *userId), string(cachedJson), expiredTime).Err(); err != nil {
+	if err := t.Cache.Set(ctx, fmt.Sprintf("refresh-token-%s", userId), string(cachedJson), expiredTime).Err(); err != nil {
 		return tokenString, expired, fmt.Errorf("can't cached refresh token")
 	}
 	return tokenString, claims.ExpiresAt, nil
 }
 
-func (t *tokenStruct) ParseRefresh(tokenString *string) (*RefreshTokenClaims, error) {
-	token, err := jwt.ParseWithClaims(*tokenString, &RefreshTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (t *Token) ParseRefresh(tokenString string) (*RefreshTokenClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &RefreshTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return mySigningKey, nil
 	})
 	if err != nil {
@@ -184,10 +146,10 @@ func (t *tokenStruct) ParseRefresh(tokenString *string) (*RefreshTokenClaims, er
 	}
 }
 
-func (t *tokenStruct) ValidateRefresh(ctx *context.Context, claims *RefreshTokenClaims) error {
+func (t *Token) ValidateRefresh(ctx context.Context, claims *RefreshTokenClaims) error {
 	g := new(errgroup.Group)
 	g.Go(func() error {
-		cacheJSON, err := infrastructure.Redis.Get(*ctx, fmt.Sprintf("refresh-token-%s", claims.UserId)).Result()
+		cacheJSON, err := t.Cache.Get(ctx, fmt.Sprintf("refresh-token-%s", claims.UserId)).Result()
 		if err != nil {
 			return fmt.Errorf("token not found")
 		}
@@ -209,15 +171,14 @@ func (t *tokenStruct) ValidateRefresh(ctx *context.Context, claims *RefreshToken
 	return nil
 }
 
-func (t *tokenStruct) CreateReset(ctx *context.Context, userId *string) (*string, *jwt.NumericDate, error) {
-	tokenString := new(string)
+func (t *Token) CreateReset(ctx context.Context, userId string) (string, *jwt.NumericDate, error) {
 	expired := new(jwt.NumericDate)
 
 	expiredTime := time.Minute * env.NewEnv().JWT_EXPIRED_RESET
 
 	tokenUUID := uuid.NewString()
 	claims := ResetTokenClaims{
-		*userId,
+		userId,
 		tokenUUID,
 		jwt.RegisteredClaims{
 			// A usual scenario is to set the expiration time relative to the current time
@@ -228,12 +189,10 @@ func (t *tokenStruct) CreateReset(ctx *context.Context, userId *string) (*string
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString(mySigningKey)
+	tokenString, err := token.SignedString(mySigningKey)
 	if err != nil {
 		return tokenString, expired, fmt.Errorf("can't signed the token")
 	}
-
-	tokenString = &ss
 
 	cachedJson, err := json.Marshal(ResetTokenCached{
 		ResetUID: claims.UUID,
@@ -242,14 +201,14 @@ func (t *tokenStruct) CreateReset(ctx *context.Context, userId *string) (*string
 		return tokenString, expired, fmt.Errorf("can't marshal reset token")
 	}
 
-	if err := infrastructure.Redis.Set(*ctx, fmt.Sprintf("reset-token-%s", *userId), string(cachedJson), expiredTime).Err(); err != nil {
+	if err := t.Cache.Set(ctx, fmt.Sprintf("reset-token-%s", userId), string(cachedJson), expiredTime).Err(); err != nil {
 		return tokenString, expired, fmt.Errorf("can't cached reset token")
 	}
 	return tokenString, claims.ExpiresAt, nil
 }
 
-func (t *tokenStruct) ParseReset(tokenString *string) (*ResetTokenClaims, error) {
-	token, err := jwt.ParseWithClaims(*tokenString, &ResetTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (t *Token) ParseReset(tokenString string) (*ResetTokenClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &ResetTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return mySigningKey, nil
 	})
 	if err != nil {
@@ -261,10 +220,10 @@ func (t *tokenStruct) ParseReset(tokenString *string) (*ResetTokenClaims, error)
 	}
 }
 
-func (t *tokenStruct) ValidateReset(ctx *context.Context, claims *ResetTokenClaims) error {
+func (t *Token) ValidateReset(ctx context.Context, claims *ResetTokenClaims) error {
 	g := new(errgroup.Group)
 	g.Go(func() error {
-		cacheJSON, err := infrastructure.Redis.Get(*ctx, fmt.Sprintf("reset-token-%s", claims.UserId)).Result()
+		cacheJSON, err := t.Cache.Get(ctx, fmt.Sprintf("reset-token-%s", claims.UserId)).Result()
 		if err != nil {
 			return fmt.Errorf("token not found")
 		}

@@ -1,0 +1,27 @@
+syntax = "proto3";
+package proto;
+
+option go_package = "./pb";
+
+service PermissionService {
+    rpc RoleAccessList(PermissionRoleAccessRequest) returns (PermissionRoleAccessListResponse);
+}
+
+message PermissionRoleAccessRequest {
+}
+
+message PermissionRoleAccessListResponse {
+    repeated PermissionRoleAccessResponse data = 1;
+}
+message PermissionRoleAccessResponse {
+    string name = 1;
+    repeated PermissionRoleAccessChildResponse permissions = 2;
+}
+
+message PermissionRoleAccessChildResponse{
+    string id = 1;
+    string code = 2;
+    string name = 3;
+    string parent = 4;
+    string full_method = 5;
+}
