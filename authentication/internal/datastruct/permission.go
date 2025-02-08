@@ -1,6 +1,7 @@
 package datastruct
 
 type PermissionRoleAccessList struct {
+	Id                string       `db:"id" json:"id"`
 	Name              string       `db:"name" json:"name"`
 	PermissionsString string       `db:"perms" json:"-"`
 	Permissions       []Permission `db:"-" json:"permissions"`

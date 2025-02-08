@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func AuthService() (pb.AuthServiceClient, pb.PermissionServiceClient) {
+func AuthService() pb.AuthServiceClient {
 	port := env.NewEnv().SERVICE_AUTH_PORT
 	fmt.Println("grpc auth target:", port)
 	conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -18,5 +18,5 @@ func AuthService() (pb.AuthServiceClient, pb.PermissionServiceClient) {
 		log.Fatal("could not connect to", port, err)
 	}
 
-	return pb.NewAuthServiceClient(conn), pb.NewPermissionServiceClient(conn)
+	return pb.NewAuthServiceClient(conn)
 }

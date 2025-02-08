@@ -27,6 +27,7 @@ func (m ServiceServer) RoleAccessList(ctx context.Context, req *pb.PermissionRol
 			})
 		}
 		roles = append(roles, &pb.PermissionRoleAccessResponse{
+			Id:          d.Id,
 			Name:        d.Name,
 			Permissions: permissions,
 		})

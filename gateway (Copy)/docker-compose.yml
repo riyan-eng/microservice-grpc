@@ -1,0 +1,15 @@
+services:
+  backend:
+    build: .
+    container_name: gateway
+    restart: unless-stopped
+    image: gateway
+    ports:
+      - 3000:3000
+    volumes:
+      - ./env-docker.json:/app/env.json
+      - ./locale:/app/locale
+      - ./docs/swagger.json:/app/docs/swagger.json
+networks:
+  network-1:
+    name: local-bridge

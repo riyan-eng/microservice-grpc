@@ -84,7 +84,7 @@ func (m *authRepository) Me(ctx context.Context, userId string) (*datastruct.Aut
 	}
 
 	if err := scan.Row(data, sqlRows); err != nil {
-		return data, fmt.Errorf("5:%v", err)
+		return data, fmt.Errorf("3:%v", err)
 	}
 
 	data.Permissions = util.UnmarshalConverter[[]string](data.PermissionsStr)

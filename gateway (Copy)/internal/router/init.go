@@ -4,27 +4,26 @@ import (
 	"server/internal/api"
 	rpcserver "server/rpc_server"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v3"
 )
 
 type routeStruct struct {
-	app     *gin.Engine
+	app     *fiber.App
 	handler *api.ServiceServer
 }
 
-func NewRouter(app *gin.Engine) *routeStruct {
+func NewRouter(app *fiber.App) *routeStruct {
 	// exampleService := service.NewExampleService(dao)
 	// authService := service.NewAuthService(dao)
 
 	exampleRpcServer := rpcserver.ExampleService()
-	authRpcServer, permissionRpcServer := rpcserver.AuthService()
+	authRpcServer := rpcserver.AuthService()
 
 	handler := api.NewService(
 		// exampleService,
 		// authService,
 		exampleRpcServer,
 		authRpcServer,
-		permissionRpcServer,
 	)
 	return &routeStruct{
 		app:     app,

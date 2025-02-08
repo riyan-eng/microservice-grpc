@@ -48,7 +48,7 @@ func (m *authService) Login(ctx context.Context, ent *entity.AuthLogin) (*datast
 
 	// verify password
 	if !m.util.Security.VerifyHash(data.Password, ent.Password) {
-		return data, token, fmt.Errorf("5:username or password you entered is incorrect")
+		return data, token, fmt.Errorf("3:username or password you entered is incorrect")
 	}
 
 	accessToken, accessExpire, err := m.util.Token.CreateAccess(ctx, data.Id, data.RoleCode)

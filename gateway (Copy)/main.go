@@ -11,15 +11,12 @@ import (
 
 	_ "server/docs"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v3"
 
 	// hertz-swagger middleware
 	// swagger embed files
+	recoverer "github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/mvrilo/go-redoc"
-	ginredoc "github.com/mvrilo/go-redoc/gin"
-	swaggerFiles "github.com/swaggo/files"
-	swagger "github.com/swaggo/gin-swagger"
 )
 
 func init() {
@@ -33,11 +30,6 @@ func init() {
 	env.NewEnv()
 
 	config.NewLimiterStore()
-	// config.NewLogger()
-
-	// infrastructure.ConnectSqlDB()
-	// infrastructure.ConnectSqlxDB()
-	// infrastructure.ConnRedis()
 	infrastructure.NewLocalizer()
 }
 
@@ -58,41 +50,33 @@ func init() {
 // @description Type "Bearer" followed by a space and JWT token.
 func main() {
 	// create instance
-	gin.SetMode(gin.ReleaseMode)
-	app := gin.New()
+	app := fiber.New()
 
 	// documentation
-	app.GET("/try/*any", swagger.WrapHandler(swaggerFiles.Handler))
-	app.Use(ginredoc.New(redoc.Redoc{
+	docsss := redoc.Redoc{
 		Title:       "Sisalak",
 		Description: "Sisalak API Description",
 		SpecFile:    "./docs/swagger.json",
 		SpecPath:    "/try/doc.json",
 		DocsPath:    "/documentation",
-	}))
+	}
+	app.Use(middleware.Documentation(docsss))
 
 	// middleware
-	app.Use(gin.Recovery())
+	app.Use(recoverer.New())
 	app.Use(middleware.RequestId())
-	// app.Use(middleware.Logger())
 	app.Use(middleware.Limiter())
 	app.Use(infrastructure.LocalizerMiddleware())
-
-	corsconfig := cors.DefaultConfig()
-	corsconfig.AllowCredentials = true
-	corsconfig.AllowOrigins = []string{"*"}
-	corsconfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
-	app.Use(cors.New(corsconfig))
+	app.Use(middleware.Cors())
 
 	// router
 	routers := router.NewRouter(app)
 	routers.Index()
 	routers.Authentication()
 	routers.Example()
-	routers.Role()
 
 	// startup log
 	fmt.Println("server run on:", env.NewEnv().SERVER_HOST+":"+env.NewEnv().SERVER_PORT)
 
-	app.Run(env.NewEnv().SERVER_HOST + ":" + env.NewEnv().SERVER_PORT)
+	app.Listen(env.NewEnv().SERVER_HOST + ":" + env.NewEnv().SERVER_PORT)
 }

@@ -32,6 +32,7 @@ func (m *permissionRepository) RoleAccessList(ctx context.Context) ([]datastruct
 
 	query := `
 	SELECT 
+		ro."uuid" as id, 
 		ro."name", 
 		COALESCE(
 			subquery.perms, 
